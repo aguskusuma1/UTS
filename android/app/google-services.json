@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "599047316506",
+    "project_id": "uts-aguskusuma1",
+    "storage_bucket": "uts-aguskusuma1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:599047316506:android:232eddd511bce631199da3",
+        "android_client_info": {
+          "package_name": "com.example.daya_assist"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBA-vWUK6kLEugPdsiG2mHF1td_XLvfJ00"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
