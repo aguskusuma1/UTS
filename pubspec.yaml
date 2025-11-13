@@ -44,11 +44,23 @@ dependencies:
   # Google Sign In
   google_sign_in: ^6.2.1
   
-  # HTTP Client untuk API
-  http: ^1.2.2
+  # HTTP Client untuk API (diganti ke Dio)
+  dio: ^5.7.0
   
   # URL Launcher untuk membuka link eksternal
   url_launcher: ^6.3.1
+  
+  # State Management
+  provider: ^6.1.2
+  
+  # Shared Preferences untuk menyimpan status onboarding
+  shared_preferences: ^2.3.2
+  
+  # Firebase Cloud Messaging
+  firebase_messaging: ^15.1.3
+  
+  # Local Notifications untuk FCM
+  flutter_local_notifications: ^18.0.1
 
 dev_dependencies:
   flutter_test:

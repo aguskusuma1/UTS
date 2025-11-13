@@ -1,46 +1,61 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import 'news_list_screen.dart';
 import 'voltage_drop_calculator_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  Future<void> _handleLogout(BuildContext context) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    try {
+      await authProvider.signOut();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Logout berhasil'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final User? user = FirebaseAuth.instance.currentUser;
-    final AuthService _authService = AuthService();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Daya Assist'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              try {
-                await _authService.signOut();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Logout berhasil'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: ${e.toString()}'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
+          Consumer<AuthProvider>(
+            builder: (context, authProvider, _) {
+              return IconButton(
+                icon: authProvider.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.logout),
+                onPressed: authProvider.isLoading
+                    ? null
+                    : () => _handleLogout(context),
+                tooltip: 'Logout',
+              );
             },
-            tooltip: 'Logout',
           ),
         ],
       ),
@@ -58,42 +73,53 @@ class HomeScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       // User Profile Picture
-                      if (user?.photoURL != null)
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundImage: NetworkImage(user!.photoURL!),
-                        )
-                      else
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-                          child: Icon(
-                            Icons.person,
-                            color: Theme.of(context).colorScheme.primaryContainer,
-                          ),
-                        ),
+                      Consumer<AuthProvider>(
+                        builder: (context, authProvider, _) {
+                          final user = authProvider.user;
+                          if (user?.photoURL != null) {
+                            return CircleAvatar(
+                              radius: 30,
+                              backgroundImage: NetworkImage(user!.photoURL!),
+                            );
+                          } else {
+                            return CircleAvatar(
+                              radius: 30,
+                              backgroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                              child: Icon(
+                                Icons.person,
+                                color: Theme.of(context).colorScheme.primaryContainer,
+                              ),
+                            );
+                          }
+                        },
+                      ),
                       const SizedBox(width: 16),
                       // User Info
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Selamat Datang,',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                  ),
-                            ),
-                            Text(
-                              user?.displayName ?? 'User',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                  ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                        child: Consumer<AuthProvider>(
+                          builder: (context, authProvider, _) {
+                            final user = authProvider.user;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Selamat Datang,',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                      ),
+                                ),
+                                Text(
+                                  user?.displayName ?? 'User',
+                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                      ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ],

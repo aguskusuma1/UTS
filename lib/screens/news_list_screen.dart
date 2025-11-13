@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/news_model.dart';
-import '../services/news_service.dart';
+import '../providers/news_provider.dart';
 import 'news_detail_screen.dart';
 
 class NewsListScreen extends StatefulWidget {
@@ -11,35 +12,21 @@ class NewsListScreen extends StatefulWidget {
 }
 
 class _NewsListScreenState extends State<NewsListScreen> {
-  final NewsService _newsService = NewsService();
-  List<NewsModel> _newsList = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-
   @override
   void initState() {
     super.initState();
-    _loadNews();
+    // Load news saat screen pertama kali dibuka
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final newsProvider = Provider.of<NewsProvider>(context, listen: false);
+      if (newsProvider.newsList.isEmpty) {
+        newsProvider.fetchNews();
+      }
+    });
   }
 
   Future<void> _loadNews() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final news = await _newsService.fetchNews();
-      setState(() {
-        _newsList = news;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Gagal memuat berita: ${e.toString()}';
-        _isLoading = false;
-      });
-    }
+    final newsProvider = Provider.of<NewsProvider>(context, listen: false);
+    await newsProvider.fetchNews();
   }
 
   @override
@@ -55,57 +42,58 @@ class _NewsListScreenState extends State<NewsListScreen> {
           ),
         ],
       ),
-      body: _buildBody(),
-    );
-  }
+      body: Consumer<NewsProvider>(
+        builder: (context, newsProvider, _) {
+          if (newsProvider.isLoading && newsProvider.newsList.isEmpty) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
-  Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
+          if (newsProvider.errorMessage != null &&
+              newsProvider.newsList.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.red[300],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    newsProvider.errorMessage!,
+                    style: TextStyle(color: Colors.red[700]),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadNews,
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
+              ),
+            );
+          }
 
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red[300],
+          if (newsProvider.newsList.isEmpty) {
+            return const Center(
+              child: Text('Tidak ada berita tersedia'),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: _loadNews,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(8),
+              itemCount: newsProvider.newsList.length,
+              itemBuilder: (context, index) {
+                final news = newsProvider.newsList[index];
+                return _buildNewsCard(news);
+              },
             ),
-            const SizedBox(height: 16),
-            Text(
-              _errorMessage!,
-              style: TextStyle(color: Colors.red[700]),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadNews,
-              child: const Text('Coba Lagi'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_newsList.isEmpty) {
-      return const Center(
-        child: Text('Tidak ada berita tersedia'),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: _loadNews,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(8),
-        itemCount: _newsList.length,
-        itemBuilder: (context, index) {
-          final news = _newsList[index];
-          return _buildNewsCard(news);
+          );
         },
       ),
     );

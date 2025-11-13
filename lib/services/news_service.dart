@@ -1,8 +1,9 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import '../models/news_model.dart';
 
 class NewsService {
+  late Dio _dio;
+  
   // Menggunakan NewsAPI.org - gratis untuk development
   // Anda bisa menggunakan API key sendiri atau menggunakan endpoint publik
   static const String baseUrl = 'https://newsapi.org/v2';
@@ -11,26 +12,36 @@ class NewsService {
   static const String country = 'id'; // Indonesia
   static const String category = 'technology'; // Kategori teknologi/elektro
 
+  NewsService() {
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+        headers: {
+          'Accept': 'application/json',
+          if (apiKey != 'YOUR_API_KEY') 'X-Api-Key': apiKey,
+        },
+      ),
+    );
+  }
+
   // Fetch news dari API
   Future<List<NewsModel>> fetchNews() async {
     try {
       // Menggunakan endpoint top headlines
       // Jika tidak ada API key, bisa menggunakan endpoint alternatif atau mock data
-      final url = Uri.parse(
-        '$baseUrl/top-headlines?country=$country&category=$category&pageSize=20',
-      );
-
-      final response = await http.get(
-        url,
-        headers: {
-          'X-Api-Key': apiKey,
-          'Accept': 'application/json',
+      final response = await _dio.get(
+        '/top-headlines',
+        queryParameters: {
+          'country': country,
+          'category': category,
+          'pageSize': 20,
         },
       ).timeout(const Duration(seconds: 10));
 
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        final newsResponse = NewsResponse.fromJson(jsonData);
+      if (response.statusCode == 200 && response.data != null) {
+        final newsResponse = NewsResponse.fromJson(response.data);
         return newsResponse.articles
             .where((article) => article.title != null && article.title!.isNotEmpty)
             .toList();
