@@ -90,8 +90,12 @@ class _VoltageDropCalculatorScreenState
 
       if (recommended != null) {
         setState(() {
-          _selectedCable = recommended;
-          _resistanceController.text = recommended.resistance.toStringAsFixed(2);
+          // Cari instance yang sama dari _availableCables untuk memastikan DropdownButton bisa mencocokkannya
+          _selectedCable = _availableCables.firstWhere(
+            (cable) => cable.name == recommended.name,
+            orElse: () => recommended,
+          );
+          _resistanceController.text = _selectedCable!.resistance.toStringAsFixed(2);
         });
 
         ScaffoldMessenger.of(context).showSnackBar(

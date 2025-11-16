@@ -10,6 +10,21 @@ class CableModel {
     required this.ampacity,
     required this.diameter,
   });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CableModel &&
+        other.name == name &&
+        other.resistance == resistance &&
+        other.ampacity == ampacity &&
+        other.diameter == diameter;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(name, resistance, ampacity, diameter);
+  }
 }
 
 class CableDatabase {
