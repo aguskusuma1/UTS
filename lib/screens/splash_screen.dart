@@ -13,8 +13,20 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     // Navigate setelah 1.5 detik
     Future.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/onboarding-check');
+      if (mounted && context.mounted) {
+        try {
+          Navigator.of(context).pushReplacementNamed('/onboarding-check');
+        } catch (e) {
+          debugPrint('Error navigating from splash: $e');
+          // Fallback: langsung ke auth jika navigasi gagal
+          if (mounted && context.mounted) {
+            try {
+              Navigator.of(context).pushReplacementNamed('/auth');
+            } catch (e2) {
+              debugPrint('Error navigating to auth: $e2');
+            }
+          }
+        }
       }
     });
   }

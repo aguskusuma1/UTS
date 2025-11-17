@@ -29,6 +29,9 @@ target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_BUILD=${FLUTT
 
 # Disable Windows macros that collide with C++ standard library functions.
 target_compile_definitions(${BINARY_NAME} PRIVATE "NOMINMAX")
+# Disable warning C4996 for unsafe functions (needed for Firebase)
+target_compile_options(${BINARY_NAME} PRIVATE /wd"4996")
+target_compile_definitions(${BINARY_NAME} PRIVATE "_CRT_SECURE_NO_WARNINGS")
 
 # Add dependency libraries and include directories. Add any application-specific
 # dependencies here.

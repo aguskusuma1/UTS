@@ -11,11 +11,13 @@ plugins {
 android {
     namespace = "com.example.daya_assist"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // ndkVersion = flutter.ndkVersion // Commented out to fix NDK issue
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // Enable core library desugaring for flutter_local_notifications
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -44,4 +46,21 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Core library desugaring for flutter_local_notifications
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
+    
+    // Firebase Authentication
+    implementation("com.google.firebase:firebase-auth")
+    
+    // Firebase Analytics (optional, but recommended)
+    implementation("com.google.firebase:firebase-analytics")
+    
+    // Firebase Cloud Messaging
+    implementation("com.google.firebase:firebase-messaging")
 }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/cable_model.dart';
+import '../models/calculation_history_model.dart';
 import '../services/voltage_drop_calculator.dart';
+import '../services/calculation_history_service.dart';
+import 'calculation_history_screen.dart';
 
 class VoltageDropCalculatorScreen extends StatefulWidget {
   const VoltageDropCalculatorScreen({super.key});
@@ -41,21 +44,46 @@ class _VoltageDropCalculatorScreenState
     super.dispose();
   }
 
-  void _calculate() {
+  void _calculate() async {
     if (_formKey.currentState!.validate()) {
       final voltage = double.parse(_voltageController.text);
       final current = double.parse(_currentController.text);
       final length = double.parse(_lengthController.text);
       final resistance = double.parse(_resistanceController.text);
 
+      final result = VoltageDropCalculator.calculate(
+        voltage: voltage,
+        current: current,
+        length: length,
+        resistance: resistance,
+      );
+
       setState(() {
-        _calculationResult = VoltageDropCalculator.calculate(
+        _calculationResult = result;
+      });
+
+      // Save to history
+      try {
+        final historyModel = CalculationHistoryModel.fromCalculation(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          timestamp: DateTime.now(),
           voltage: voltage,
           current: current,
           length: length,
           resistance: resistance,
+          cableName: _selectedCable?.name ?? 'Custom',
+          voltageDropVolts: result.voltageDropVolts,
+          voltageDropPercent: result.voltageDropPercent,
+          remainingVoltage: result.remainingVoltage,
+          remainingVoltagePercent: result.remainingVoltagePercent,
+          isValid: result.isValid,
+          warning: result.warning,
         );
-      });
+        await CalculationHistoryService.saveCalculation(historyModel);
+      } catch (e) {
+        // Error saving to history, but don't show error to user
+        print('Error saving to history: $e');
+      }
 
       // Scroll to result
       Scrollable.ensureVisible(
@@ -122,6 +150,20 @@ class _VoltageDropCalculatorScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kalkulator Drop Tegangan JTR'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CalculationHistoryScreen(),
+                ),
+              );
+            },
+            tooltip: 'History Perhitungan',
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

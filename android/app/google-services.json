@@ -12,7 +12,20 @@
           "package_name": "com.example.daya_assist"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "599047316506-vb5hvgfogqtnatcphl8mqi09ufgqlffi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.daya_assist",
+            "certificate_hash": "2cb290fd059bcd9521128f05e65826b576f7411d"
+          }
+        },
+        {
+          "client_id": "599047316506-ils3klr2oa7qnb92qhar06jqlp5c07v4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBA-vWUK6kLEugPdsiG2mHF1td_XLvfJ00"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "599047316506-grgfrrls68rp2ps3rcrbepib9ungc3of.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "599047316506-vgrof0j9ncfpprcld62g3faso6ietqpn.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.dayaAssist"
+              }
+            }
+          ]
         }
       }
     }

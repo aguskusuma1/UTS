@@ -1,5 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 // Background message handler (harus di top-level function)
@@ -20,49 +20,62 @@ class FCMService {
 
   // Initialize FCM
   static Future<void> initialize() async {
-    // Request permission
-    NotificationSettings settings = await _messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('User granted permission');
-    } else if (settings.authorizationStatus ==
-        AuthorizationStatus.provisional) {
-      debugPrint('User granted provisional permission');
-    } else {
-      debugPrint('User declined or has not accepted permission');
+    // Skip FCM untuk web
+    if (kIsWeb) {
+      debugPrint('FCM tidak didukung di web, skip initialization');
+      return;
     }
 
-    // Get FCM token
-    _fcmToken = await _messaging.getToken();
-    debugPrint('FCM Token: $_fcmToken');
+    try {
+      // Request permission
+      NotificationSettings settings = await _messaging.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
 
-    // Listen to token refresh
-    _messaging.onTokenRefresh.listen((newToken) {
-      _fcmToken = newToken;
-      debugPrint('FCM Token refreshed: $_fcmToken');
-    });
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        debugPrint('User granted permission');
+      } else if (settings.authorizationStatus ==
+          AuthorizationStatus.provisional) {
+        debugPrint('User granted provisional permission');
+      } else {
+        debugPrint('User declined or has not accepted permission');
+      }
 
-    // Initialize local notifications for Android
-    await _initializeLocalNotifications();
+      // Get FCM token
+      _fcmToken = await _messaging.getToken();
+      debugPrint('FCM Token: $_fcmToken');
 
-    // Handle foreground messages
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+      // Listen to token refresh
+      _messaging.onTokenRefresh.listen((newToken) {
+        _fcmToken = newToken;
+        debugPrint('FCM Token refreshed: $_fcmToken');
+      });
 
-    // Handle background message taps
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+      // Initialize local notifications hanya untuk Android/iOS (skip web)
+      if (!kIsWeb) {
+        await _initializeLocalNotifications();
+      }
 
-    // Check if app was opened from a notification
-    RemoteMessage? initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      _handleMessageOpenedApp(initialMessage);
+      // Handle foreground messages
+      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+
+      // Handle background message taps
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+
+      // Check if app was opened from a notification
+      RemoteMessage? initialMessage = await _messaging.getInitialMessage();
+      if (initialMessage != null) {
+        _handleMessageOpenedApp(initialMessage);
+      }
+    } catch (e) {
+      debugPrint('Error initializing FCM: $e');
+      // Lanjutkan meskipun ada error
     }
   }
 
@@ -99,26 +112,35 @@ class FCMService {
 
   // Show local notification
   static Future<void> _showLocalNotification(RemoteMessage message) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'daya_assist_channel',
-      'Daya Assist Notifications',
-      channelDescription: 'Notifications for Daya Assist app',
-      importance: Importance.high,
-      priority: Priority.high,
-      showWhen: true,
-    );
+    // Skip untuk web
+    if (kIsWeb) {
+      return;
+    }
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    try {
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
+        'daya_assist_channel',
+        'Daya Assist Notifications',
+        channelDescription: 'Notifications for Daya Assist app',
+        importance: Importance.high,
+        priority: Priority.high,
+        showWhen: true,
+      );
 
-    await _localNotifications.show(
-      message.hashCode,
-      message.notification?.title ?? 'Daya Assist',
-      message.notification?.body ?? '',
-      platformChannelSpecifics,
-      payload: message.data.toString(),
-    );
+      const NotificationDetails platformChannelSpecifics =
+          NotificationDetails(android: androidPlatformChannelSpecifics);
+
+      await _localNotifications.show(
+        message.hashCode,
+        message.notification?.title ?? 'Daya Assist',
+        message.notification?.body ?? '',
+        platformChannelSpecifics,
+        payload: message.data.toString(),
+      );
+    } catch (e) {
+      debugPrint('Error showing local notification: $e');
+    }
   }
 
   // Handle message opened from notification
@@ -130,14 +152,30 @@ class FCMService {
 
   // Subscribe to topic
   static Future<void> subscribeToTopic(String topic) async {
-    await _messaging.subscribeToTopic(topic);
-    debugPrint('Subscribed to topic: $topic');
+    if (kIsWeb) {
+      debugPrint('FCM topic subscription tidak didukung di web');
+      return;
+    }
+    try {
+      await _messaging.subscribeToTopic(topic);
+      debugPrint('Subscribed to topic: $topic');
+    } catch (e) {
+      debugPrint('Error subscribing to topic: $e');
+    }
   }
 
   // Unsubscribe from topic
   static Future<void> unsubscribeFromTopic(String topic) async {
-    await _messaging.unsubscribeFromTopic(topic);
-    debugPrint('Unsubscribed from topic: $topic');
+    if (kIsWeb) {
+      debugPrint('FCM topic unsubscription tidak didukung di web');
+      return;
+    }
+    try {
+      await _messaging.unsubscribeFromTopic(topic);
+      debugPrint('Unsubscribed from topic: $topic');
+    } catch (e) {
+      debugPrint('Error unsubscribing from topic: $e');
+    }
   }
 }
 

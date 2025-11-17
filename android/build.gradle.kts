@@ -5,15 +5,14 @@ allprojects {
     }
 }
 
-val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("../../build")
-        .get()
-rootProject.layout.buildDirectory.value(newBuildDir)
+// Use absolute path to avoid issues with spaces in path
+val projectRoot = rootProject.projectDir.parentFile
+val buildDirPath = File(projectRoot, "build").absolutePath
+rootProject.layout.buildDirectory.set(File(buildDirPath))
 
 subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
+    val subprojectBuildDir = File(buildDirPath, project.name).absolutePath
+    project.layout.buildDirectory.set(File(subprojectBuildDir))
 }
 subprojects {
     project.evaluationDependsOn(":app")

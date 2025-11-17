@@ -31,7 +31,7 @@ class AuthProvider with ChangeNotifier {
 
       final userCredential = await _authService.signInWithGoogle();
 
-      if (userCredential != null) {
+      if (userCredential != null && userCredential.user != null) {
         _user = userCredential.user;
         _isLoading = false;
         _errorMessage = null;
